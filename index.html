@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Location Picker</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        #map { height: 100vh; width: 100vw; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; }
+        #coords-display {
+            position: absolute; bottom: 20px; left: 10px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.9); padding: 5px; border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="coords-display">Click on map to select coordinates</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // 1. Parameters extract karne ka function (Jaise Tencent ke query string the)
+    function getQueryParam(name) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Initial Coordinates/Zoom (Default Delhi agar URL me na ho)
+    var inputCoord = getQueryParam('coord') ? getQueryParam('coord').split(',') : [28.6139, 77.2090];
+    var zoomLevel = getQueryParam('zoom') ? getQueryParam('zoom') : 12;
+
+    // 2. Map initialize karein centered at initial coords
+    var map = L.map('map').setView(inputCoord, zoomLevel);
+
+    // 3. Load OpenStreetMap tiles (Free - no API key)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Initial Marker (Draggable)
+    var marker = L.marker(inputCoord, {draggable: true}).addTo(map);
+    var display = document.getElementById('coords-display');
+
+    // Tencent ke coordination update behavior replicate karne ka logic:
+    // a. Map par click karne par pin move karna aur URL me coordinate change reflect karna (display ke liye)
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        marker.setLatLng([lat, lng]);
+        updateDisplay(lat, lng);
+    });
+
+    // b. Marker drag karne par coordinates update karna
+    marker.on('dragend', function(e) {
+        var lat = marker.getLatLng().lat;
+        var lng = marker.getLatLng().lng;
+        updateDisplay(lat, lng);
+    });
+
+    function updateDisplay(lat, lng) {
+        display.innerHTML = "Selected: " + lat.toFixed(6) + ", " + lng.toFixed(6);
+        // Displaying coordinates, similarly we can call a callback with this data.
+        // We can create a URL like this to update dynamically if needed for WebView:
+        // window.location.hash = "coord=" + lat.toFixed(6) + "," + lng.toFixed(6); 
+    }
+
+</script>
+</body>
+</html>
